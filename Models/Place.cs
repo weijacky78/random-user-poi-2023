@@ -9,7 +9,7 @@ public class Place
     [MaxLength(128)]
     public string Name { get; set; } = "";
 
-    public string Descriprition { get; set; } = "";
+    public string Description { get; set; } = "";
 
     public decimal Latitude { get; set; }
 
