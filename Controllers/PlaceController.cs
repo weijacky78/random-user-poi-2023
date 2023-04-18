@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using places_webapi.Models;
+using places_webapi.Services;
 
 namespace places_webapi.Controllers
 {
@@ -14,20 +15,23 @@ namespace places_webapi.Controllers
     public class PlaceController : ControllerBase
     {
         private readonly PlacesContext _context;
+        private readonly IMessageService _messageService;
 
-        public PlaceController(PlacesContext context)
+        public PlaceController(PlacesContext context, IMessageService messageService)
         {
             _context = context;
+            _messageService = messageService;
+
         }
 
         // GET: api/Place
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Place>>> GetPlaces()
         {
-          if (_context.Places == null)
-          {
-              return NotFound();
-          }
+            if (_context.Places == null)
+            {
+                return NotFound();
+            }
             return await _context.Places.ToListAsync();
         }
 
@@ -35,10 +39,10 @@ namespace places_webapi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Place>> GetPlace(uint id)
         {
-          if (_context.Places == null)
-          {
-              return NotFound();
-          }
+            if (_context.Places == null)
+            {
+                return NotFound();
+            }
             var place = await _context.Places.FindAsync(id);
 
             if (place == null)
@@ -85,13 +89,19 @@ namespace places_webapi.Controllers
         [HttpPost]
         public async Task<ActionResult<Place>> PostPlace(Place place)
         {
-          if (_context.Places == null)
-          {
-              return Problem("Entity set 'PlacesContext.Places'  is null.");
-          }
+            if (_context.Places == null)
+            {
+                return Problem("Entity set 'PlacesContext.Places'  is null.");
+            }
             _context.Places.Add(place);
             await _context.SaveChangesAsync();
-
+            _messageService.SendEmail(
+                "Places of Interest Mailer",
+                "poi@poi.net",
+                "Bob",
+                "bob@poi.net",
+                "New POI",
+                $"check it out:{place.PlaceId}");
             return CreatedAtAction("GetPlace", new { id = place.PlaceId }, place);
         }
 
